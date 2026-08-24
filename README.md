@@ -1,0 +1,73 @@
+sudo apt update
+sudo apt install mpv curl gawk grep sed
+
+sudo pacman -S mpv curl awk grep sed
+
+
+
+mkdir -p ~/.local/bin
+nano ~/.local/bin/play-gh
+
+#!/bin/bash
+
+REPO="Voyager-k/tracks"
+BRANCH="main"
+
+# Fetch songs from GitHub API
+FETCH_SONGS() {
+    curl -s "https://api.github.com/repos/$REPO/contents?ref=$BRANCH" | \
+    grep -o '"download_url": *"[^"]*"' | \
+    cut -d'"' -f4 | \
+    grep -E '\.(mp3|flac|wav|m4a|ogg)$' | \
+    while read -r url; do
+        filename=$(basename "$url" | sed 's/%20/ /g' | sed 's/\.[^.]*$//')
+        echo "$filename|$url"
+    done
+}
+
+# If no arguments are provided, list all available tracks with numbers
+if [ $# -eq 0 ]; then
+    echo "🎵 Available tracks in $REPO:"
+    echo "----------------------------------------"
+    FETCH_SONGS | awk -F'|' '{print "  " NR ") " $1}'
+    echo "----------------------------------------"
+    echo "Usage: play-gh <number> [number2 number3 ...]"
+    echo "Example: play-gh 1 3 5"
+    exit 0
+fi
+
+# Build a playlist from the provided numbers
+PLAYLIST=()
+DISPLAY_QUEUE=()
+
+ALL_SONGS=$(FETCH_SONGS)
+
+for num in "$@"; do
+    if [[ "$num" =~ ^[0-9]+$ ]]; then
+        line=$(echo "$ALL_SONGS" | sed -n "${num}p")
+        if [ -n "$line" ]; then
+            name=$(echo "$line" | cut -d'|' -f1)
+            url=$(echo "$line" | cut -d'|' -f2)
+            PLAYLIST+=("$url")
+            DISPLAY_QUEUE+=("$name")
+        fi
+    fi
+done
+
+# Check if we found valid songs to play
+if [ ${#PLAYLIST[@]} -eq 0 ]; then
+    echo "❌ No valid songs selected."
+    exit 1
+fi
+
+# Show the queue
+echo "🎶 Play Queue:"
+echo "----------------------------------------"
+for i in "${!DISPLAY_QUEUE[@]}"; do
+    echo "  $((i+1)). ${DISPLAY_QUEUE[$i]}"
+done
+echo "----------------------------------------"
+echo "Streaming via mpv..."
+
+# Play the queue using mpv (--no-video prevents graphics errors)
+mpv --no-video "${PLAYLIST[@]}"
