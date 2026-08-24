@@ -13,15 +13,18 @@ nano ~/.local/bin/play-gh
 REPO="Voyager-k/tracks"
 BRANCH="main"
 
-# Fetch songs from GitHub API
+# Fetch songs and properly URL-encode the download links using python3 (safe for #, spaces, etc.)
 FETCH_SONGS() {
     curl -s "https://api.github.com/repos/$REPO/contents?ref=$BRANCH" | \
     grep -o '"download_url": *"[^"]*"' | \
     cut -d'"' -f4 | \
     grep -E '\.(mp3|flac|wav|m4a|ogg)$' | \
     while read -r url; do
+        # Clean filename for display
         filename=$(basename "$url" | sed 's/%20/ /g' | sed 's/\.[^.]*$//')
-        echo "$filename|$url"
+        # URL-encode the raw link safely so # and spaces don't break curl/mpv
+        encoded_url=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$url', safe=':/%'))")
+        echo "$filename|$encoded_url"
     done
 }
 
@@ -36,10 +39,8 @@ if [ $# -eq 0 ]; then
     exit 0
 fi
 
-# Build a playlist from the provided numbers
 PLAYLIST=()
 DISPLAY_QUEUE=()
-
 ALL_SONGS=$(FETCH_SONGS)
 
 for num in "$@"; do
@@ -54,13 +55,11 @@ for num in "$@"; do
     fi
 done
 
-# Check if we found valid songs to play
 if [ ${#PLAYLIST[@]} -eq 0 ]; then
     echo "❌ No valid songs selected."
     exit 1
 fi
 
-# Show the queue
 echo "🎶 Play Queue:"
 echo "----------------------------------------"
 for i in "${!DISPLAY_QUEUE[@]}"; do
@@ -69,5 +68,4 @@ done
 echo "----------------------------------------"
 echo "Streaming via mpv..."
 
-# Play the queue using mpv (--no-video prevents graphics errors)
 mpv --no-video "${PLAYLIST[@]}"
