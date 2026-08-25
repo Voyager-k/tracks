@@ -1,19 +1,21 @@
 #debian
-sudo apt update
-sudo apt install mpv curl gawk grep sed
+
+	sudo apt install mpv curl gawk grep sed
 
 #arch
-sudo pacman -S mpv curl awk grep sed
 
-#after edit nano
-chmod +x ~/.local/bin/play-gh
+	sudo pacman -S mpv curl awk grep sed	
 
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-source ~/.bashrc
+#after edit nano	
+
+	chmod +x ~/.local/bin/play-gh
+
+	echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+	source ~/.bashrc
 ________________________________________________________
 
-mkdir -p ~/.local/bin
-nano ~/.local/bin/play-gh
+	mkdir -p ~/.local/bin
+	nano ~/.local/bin/play-gh
 
 #!/bin/bash
 
