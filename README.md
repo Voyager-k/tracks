@@ -20,7 +20,7 @@ nano ~/.local/bin/play-gh
 REPO="Voyager-k/tracks"
 BRANCH="main"
 
-# Fetch songs and properly URL-encode the download links using python3 (safe for #, spaces, etc.)
+#Fetch songs and properly URL-encode the download links using python3 (safe for #, spaces, etc.)
 FETCH_SONGS() {
     curl -s "https://api.github.com/repos/$REPO/contents?ref=$BRANCH" | \
     grep -o '"download_url": *"[^"]*"' | \
@@ -35,7 +35,7 @@ FETCH_SONGS() {
     done
 }
 
-# If no arguments are provided, list all available tracks with numbers
+#If no arguments are provided, list all available tracks with numbers
 if [ $# -eq 0 ]; then
     echo "Available tracks in $REPO:"
     echo "----------------------------------------"
